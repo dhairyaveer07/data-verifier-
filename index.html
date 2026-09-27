@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI-Powered Data Verification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+:root{
+  --bg:#F7F8FC; --surface:#FFFFFF; --ink:#10131A; --sub:#565D71; --line:#E3E6F0;
+  --blue:#3552F0; --purple:#7C5CFC; --green:#12875A; --amber:#B8720A; --red:#C22A2A;
+  --blueSoft:#EEF1FE; --purpleSoft:#F2EEFE; --greenSoft:#E7F6EF; --amberSoft:#FBF0DE; --redSoft:#FBEAEA;
+  --radius:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1016; --surface:#161923; --ink:#EDEFF7; --sub:#9AA1B8; --line:#272C3B;
+    --blueSoft:#1B2247; --purpleSoft:#241D45; --greenSoft:#122A22; --amberSoft:#2E230F; --redSoft:#2E1616;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1016; --surface:#161923; --ink:#EDEFF7; --sub:#9AA1B8; --line:#272C3B;
+  --blueSoft:#1B2247; --purpleSoft:#241D45; --greenSoft:#122A22; --amberSoft:#2E230F; --redSoft:#2E1616;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth; scroll-padding-top:calc(72px + env(safe-area-inset-top,0px));}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);}
+h1,h2,h3,.brand{font-family:'Space Grotesk',system-ui,sans-serif;}
+a{color:inherit;}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px;}
+nav{position:sticky;top:0;z-index:20;background:color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--line); padding-top:env(safe-area-inset-top,0px);}
+.navrow{display:flex;align-items:center;justify-content:space-between;height:64px;}
+.brand{font-weight:700;font-size:18px;display:flex;gap:8px;align-items:center;}
+.brand .dot{width:10px;height:10px;border-radius:3px;background:linear-gradient(135deg,var(--blue),var(--purple));display:inline-block;}
+.navlinks{display:flex;gap:26px;font-size:14px;color:var(--sub);}
+.navlinks a{text-decoration:none;}
+.navlinks a:hover{color:var(--ink);}
+@media (max-width:760px){.navlinks{display:none;}}
+section{padding:64px 0;}
+.eyebrow{color:var(--purple);font-weight:600;font-size:13px;margin:0 0 8px;}
+h2{font-size:28px;margin:0 0 14px;max-width:620px;}
+.lead{color:var(--sub);font-size:16px;max-width:640px;line-height:1.6;margin:0 0 32px;}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:10px;font-weight:600;
+  font-size:14px;border:1px solid transparent;cursor:pointer;text-decoration:none;}
+.btn-primary{background:var(--ink);color:var(--bg);}
+:root[data-theme="dark"] .btn-primary, @media (prefers-color-scheme:dark){.btn-primary{color:var(--surface);}}
+.btn-ghost{background:transparent;border-color:var(--line);color:var(--ink);}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;}
+.grid{display:grid;gap:16px;}
+.g4{grid-template-columns:repeat(4,1fr);}
+.g3{grid-template-columns:repeat(3,1fr);}
+.g2{grid-template-columns:repeat(2,1fr);}
+@media(max-width:900px){.g4{grid-template-columns:repeat(2,1fr);}.g3{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:560px){.g4,.g3,.g2{grid-template-columns:1fr;}}
+.stat-num{font-size:26px;font-weight:700;font-family:'Space Grotesk',sans-serif;}
+.stat-label{color:var(--sub);font-size:13px;margin-top:4px;}
+.hero{padding-top:72px;}
+.herogrid{display:grid;grid-template-columns:1.1fr 0.9fr;gap:40px;align-items:center;}
+@media(max-width:860px){.herogrid{grid-template-columns:1fr;}}
+h1{font-size:42px;line-height:1.1;margin:0 0 16px;}
+.flow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+.flowstep{background:var(--blueSoft);color:var(--blue);padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;}
+.flowarrow{color:var(--sub);}
+.upload{border:1.5px dashed var(--line);border-radius:var(--radius);padding:34px;text-align:center;background:var(--surface);}
+.upload.drag{border-color:var(--blue);background:var(--blueSoft);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;}
+th{color:var(--sub);font-weight:600;}
+.scrollx{overflow-x:auto;}
+.badge{padding:3px 9px;border-radius:99px;font-size:12px;font-weight:600;}
+.b-crit{background:var(--redSoft);color:var(--red);}
+.b-high{background:var(--amberSoft);color:var(--amber);}
+.b-med{background:var(--blueSoft);color:var(--blue);}
+.b-low{background:var(--greenSoft);color:var(--green);}
+.scorewrap{display:grid;grid-template-columns:200px 1fr;gap:32px;align-items:center;}
+@media(max-width:700px){.scorewrap{grid-template-columns:1fr;}}
+.ring{width:170px;height:170px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:conic-gradient(var(--blue) calc(var(--pct,0)*1%), var(--line) 0); position:relative;}
+.ring::before{content:"";position:absolute;inset:14px;background:var(--surface);border-radius:50%;}
+.ring span{position:relative;font-size:34px;font-weight:700;font-family:'Space Grotesk',sans-serif;}
+.barrow{display:flex;align-items:center;gap:12px;margin:12px 0;}
+.barrow .lbl{width:120px;font-size:13px;color:var(--sub);}
+.bar{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--purple));border-radius:99px;}
+.techcard{display:flex;gap:12px;align-items:flex-start;}
+.techicon{width:36px;height:36px;border-radius:9px;background:var(--purpleSoft);color:var(--purple);
+  display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;}
+.slider{width:100%;}
+.pill{font-size:12px;color:var(--sub);border:1px solid var(--line);padding:6px 10px;border-radius:8px;display:inline-flex;gap:6px;align-items:center;}
+.rules{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;}
+footer{padding:36px 0;color:var(--sub);font-size:13px;border-top:1px solid var(--line);}
+pre.report{white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:12.5px;background:var(--bg);
+  border:1px solid var(--line);border-radius:10px;padding:16px;max-height:340px;overflow:auto;}
+</style>
+</head>
+<body>
+<nav><div class="wrap navrow">
+  <div class="brand"><span class="dot"></span>DataVerify AI</div>
+  <div class="navlinks">
+    <a href="#home">Home</a><a href="#upload">Upload Data</a><a href="#quality">Data Quality</a>
+    <a href="#anomalies">Anomalies</a><a href="#reports">Reports</a><a href="#tech">Technology</a>
+  </div>
+  <a href="#upload" class="btn btn-primary" style="padding:9px 16px;">Upload Dataset</a>
+</div></nav>
+
+<section id="home" class="hero"><div class="wrap herogrid">
+  <div>
+    <p class="eyebrow">AI-Powered Data Verification</p>
+    <h1>Automatically check. Detect problems. Improve data quality.</h1>
+    <p class="lead">An intelligent system that analyzes datasets, detects errors and anomalies, checks data quality, and suggests fixes — before bad data reaches your reports.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <a href="#upload" class="btn btn-primary">Upload Dataset</a>
+      <a href="#" id="demoBtn" class="btn btn-ghost">View Demo</a>
+    </div>
+  </div>
+  <div class="card">
+    <div class="flow" style="justify-content:center;">
+      <span class="flowstep">Raw Data</span><span class="flowarrow">→</span>
+      <span class="flowstep" style="background:var(--purpleSoft);color:var(--purple);">AI Analysis</span>
+      <span class="flowarrow">→</span><span class="flowstep" style="background:var(--greenSoft);color:var(--green);">Verified Data</span>
+    </div>
+    <p class="lead" style="margin:18px 0 0;font-size:14px;">Every upload runs through profiling, validation, anomaly detection and scoring automatically.</p>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <p class="eyebrow">The Problem</p>
+  <h2>Why data verification matters</h2>
+  <div class="grid g2" style="align-items:start;">
+    <ul class="lead" style="margin:0;padding-left:18px;">
+      <li>Manual data checking takes a lot of time</li>
+      <li>Human checking can introduce errors</li>
+      <li>Duplicates and missing values are hard to spot by eye</li>
+      <li>Unusual patterns often go unnoticed</li>
+      <li>Poor-quality data skews analysis and decisions</li>
+      <li>Verification delays hold up data pipelines</li>
+    </ul>
+    <div class="card" style="text-align:center;">
+      <div class="stat-num" style="font-size:38px;color:var(--red);">$12.9M</div>
+      <div class="stat-label">average annual cost associated with bad data for organizations</div>
+    </div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <p class="eyebrow">Our Solution</p>
+  <h2>The AI data verification engine</h2>
+  <p class="lead">The system checks uploaded data automatically before it reaches production or analysis, learning normal patterns so it can flag what doesn't fit.</p>
+  <div class="flow">
+    <span class="flowstep">Upload</span><span class="flowarrow">→</span><span class="flowstep">Profile</span>
+    <span class="flowarrow">→</span><span class="flowstep">Validate</span><span class="flowarrow">→</span>
+    <span class="flowstep">Detect Issues</span><span class="flowarrow">→</span><span class="flowstep">Score</span>
+    <span class="flowarrow">→</span><span class="flowstep">Report</span>
+  </div>
+</div></section>
+
+<section id="upload"><div class="wrap">
+  <p class="eyebrow">Dataset Upload</p>
+  <h2>Upload a CSV to see it analyzed live</h2>
+  <p class="lead">Drop a .csv file, or load the sample dataset — everything below updates automatically. (This demo parses CSV in your browser; Excel support is on the roadmap.)</p>
+  <div class="upload" id="dropzone">
+    <p style="margin:0 0 12px;font-weight:600;">Drag & drop a CSV file here</p>
+    <p style="margin:0 0 16px;color:var(--sub);font-size:13px;">or</p>
+    <input type="file" id="fileInput" accept=".csv" style="display:none;">
+    <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">Choose File</button>
+    <p id="fileName" style="margin:14px 0 0;color:var(--sub);font-size:13px;"></p>
+  </div>
+  <div class="grid g4" style="margin-top:20px;">
+    <div class="card"><div class="stat-num" id="s-rows">–</div><div class="stat-label">Rows</div></div>
+    <div class="card"><div class="stat-num" id="s-cols">–</div><div class="stat-label">Columns</div></div>
+    <div class="card"><div class="stat-num" id="s-missing">–</div><div class="stat-label">Missing values</div></div>
+    <div class="card"><div class="stat-num" id="s-dupes">–</div><div class="stat-label">Duplicate rows</div></div>
+  </div>
+  <div class="card scrollx" style="margin-top:20px;"><table id="previewTable"><thead></thead><tbody></tbody></table></div>
+</div></section>
+
+<section id="quality"><div class="wrap">
+  <p class="eyebrow">Data Profiling & Quality</p>
+  <h2>Data quality score</h2>
+  <div class="grid g4" style="margin-bottom:28px;">
+    <div class="card"><div class="stat-num" id="p-num">–</div><div class="stat-label">Numerical columns</div></div>
+    <div class="card"><div class="stat-num" id="p-cat">–</div><div class="stat-label">Categorical columns</div></div>
+    <div class="card"><div class="stat-num" id="p-date">–</div><div class="stat-label">Date columns</div></div>
+    <div class="card"><div class="stat-num" id="p-text">–</div><div class="stat-label">Text columns</div></div>
+  </div>
+  <div class="card scorewrap">
+    <div class="ring" id="scoreRing" style="--pct:0;"><span id="scoreNum">–</span></div>
+    <div>
+      <div class="barrow"><span class="lbl">Completeness</span><div class="bar"><i id="bar-comp" style="width:0%"></i></div></div>
+      <div class="barrow"><span class="lbl">Accuracy</span><div class="bar"><i id="bar-acc" style="width:0%"></i></div></div>
+      <div class="barrow"><span class="lbl">Consistency</span><div class="bar"><i id="bar-cons" style="width:0%"></i></div></div>
+      <div class="barrow"><span class="lbl">Validity</span><div class="bar"><i id="bar-valid" style="width:0%"></i></div></div>
+      <div class="barrow"><span class="lbl">Uniqueness</span><div class="bar"><i id="bar-uniq" style="width:0%"></i></div></div>
+    </div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <p class="eyebrow">Validation Rules</p>
+  <h2>Set validation rules & sensitivity</h2>
+  <div class="rules">
+    <label class="pill"><input type="checkbox" checked disabled> Required fields</label>
+    <label class="pill"><input type="checkbox" checked disabled> Valid email format</label>
+    <label class="pill"><input type="checkbox" checked disabled> Numeric range</label>
+    <label class="pill"><input type="checkbox" checked disabled> Duplicate detection</label>
+    <label class="pill"><input type="checkbox" checked disabled> Missing-value detection</label>
+    <label class="pill"><input type="checkbox" checked disabled> Date validation</label>
+  </div>
+  <div class="card" style="max-width:420px;">
+    <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--sub);margin-bottom:8px;">
+      <span>Sensitivity</span><span id="sensLabel">Medium</span>
+    </div>
+    <input type="range" min="0" max="2" value="1" step="1" class="slider" id="sensSlider">
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--sub);margin-top:6px;">
+      <span>Low</span><span>Medium</span><span>High</span>
+    </div>
+  </div>
+</div></section>
+
+<section id="anomalies"><div class="wrap">
+  <p class="eyebrow">Smart Anomaly Detection</p>
+  <h2>Detected issues</h2>
+  <p class="lead">Statistical checks (missing values, duplicates, out-of-range z-scores) flag records that don't match the rest of the dataset.</p>
+  <div class="card scrollx">
+    <table id="anomTable"><thead><tr><th>Column</th><th>Problem</th><th>Severity</th><th>Detected value</th><th>Suggested action</th></tr></thead><tbody></tbody></table>
+  </div>
+</div></section>
+
+<section id="tech"><div class="wrap">
+  <p class="eyebrow">How AI Helps</p>
+  <h2>Machine learning under the hood</h2>
+  <p class="lead">Machine learning models detect unusual patterns, statistical analysis flags outliers and missing values, and the system adapts as new data patterns appear — cutting manual checking dramatically. Built on TensorFlow, PyTorch and Scikit-learn.</p>
+  <div class="grid g4">
+    <div class="card techcard"><div class="techicon">Fe</div><div><b>Frontend</b><div class="stat-label">React</div></div></div>
+    <div class="card techcard"><div class="techicon">Be</div><div><b>Backend</b><div class="stat-label">Python + FastAPI</div></div></div>
+    <div class="card techcard"><div class="techicon">Db</div><div><b>Database</b><div class="stat-label">PostgreSQL</div></div></div>
+    <div class="card techcard"><div class="techicon">Ca</div><div><b>Caching</b><div class="stat-label">Redis</div></div></div>
+    <div class="card techcard"><div class="techicon">Sp</div><div><b>Data processing</b><div class="stat-label">Apache Spark</div></div></div>
+    <div class="card techcard"><div class="techicon">Kf</div><div><b>Streaming</b><div class="stat-label">Kafka</div></div></div>
+    <div class="card techcard"><div class="techicon">Cl</div><div><b>Cloud</b><div class="stat-label">AWS / GCP</div></div></div>
+    <div class="card techcard"><div class="techicon">Ml</div><div><b>AI / ML</b><div class="stat-label">TensorFlow · PyTorch · Scikit-learn</div></div></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <p class="eyebrow">Issues & Alerts</p>
+  <h2>Alerts & suggestions</h2>
+  <div class="grid g2" id="alertsList" style="grid-template-columns:1fr;"></div>
+</div></section>
+
+<section><div class="wrap">
+  <p class="eyebrow">Technical Challenges</p>
+  <h2>Built to handle real-world data</h2>
+  <div class="grid g4">
+    <div class="card"><b>Different data types</b><div class="lead" style="margin:8px 0 0;font-size:13px;">Flexible adapters and automatic schema detection.</div></div>
+    <div class="card"><b>False positives</b><div class="lead" style="margin:8px 0 0;font-size:13px;">Adjustable AI sensitivity levels.</div></div>
+    <div class="card"><b>Large datasets</b><div class="lead" style="margin:8px 0 0;font-size:13px;">Distributed processing with Spark.</div></div>
+    <div class="card"><b>Changing patterns</b><div class="lead" style="margin:8px 0 0;font-size:13px;">Continuous monitoring and model retraining.</div></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <p class="eyebrow">Key Benefits</p>
+  <h2>Why teams use it</h2>
+  <div class="grid g4">
+    <div class="card"><b>Faster verification</b></div><div class="card"><b>Reduced manual work</b></div>
+    <div class="card"><b>Better data quality</b></div><div class="card"><b>Automated anomaly detection</b></div>
+    <div class="card"><b>Real-time monitoring</b></div><div class="card"><b>Detailed reports</b></div>
+    <div class="card"><b>Scalable architecture</b></div>
+  </div>
+</div></section>
+
+<section id="reports"><div class="wrap">
+  <p class="eyebrow">Verification Report</p>
+  <h2>Generate a verification report</h2>
+  <button class="btn btn-primary" id="genReport">Generate Verification Report</button>
+  <button class="btn btn-ghost" id="dlReport" style="display:none;">Download .txt</button>
+  <div class="card" style="margin-top:18px;"><pre class="report" id="reportOut">No report generated yet — click "Generate Verification Report" above.</pre></div>
+</div></section>
+
+<footer><div class="wrap">AI-Powered Data Verification & Data Quality System — student demo. Runs entirely in your browser.</div></footer>
+
+<script>
+const SAMPLE = `id,name,age,email,signup_date,country,amount
+1,Asha Rao,29,asha@mail.com,2025-01-04,India,120.50
+2,Kevin Lee,34,kevin@mail.com,2025-01-05,USA,89.00
+3,Meera Nair,,meera@mail.com,2025-01-05,India,76.20
+4,Tom Ho,41,tomho.mail.com,2025-01-06,UK,145.00
+5,Meera Nair,27,meera@mail.com,2025-01-05,India,76.20
+6,Sara Iqbal,150,sara@mail.com,2025-01-07,India,98.10
+7,Liu Chen,31,liu@mail.com,2025-01-08,China,102.30
+8,,26,dan@mail.com,2025-01-08,USA,5400.00
+9,Ravi Kumar,38,ravi@mail.com,2025-01-09,India,64.40
+10,Ana Silva,45,ana@mail.com,2025-01-09,Brazil,88.75`;
+
+let sens = 1; // 0 low,1 med,2 high
+document.getElementById('sensSlider').addEventListener('input', e=>{
+  sens = +e.target.value;
+  document.getElementById('sensLabel').textContent = ['Low','Medium','High'][sens];
+  if(window.__rows) analyze(window.__rows);
+});
+
+function parseCSV(text){ return Papa.parse(text, {header:true, skipEmptyLines:true}).data; }
+
+function loadRows(rows){
+  window.__rows = rows;
+  analyze(rows);
+}
+
+document.getElementById('demoBtn').addEventListener('click', e=>{
+  e.preventDefault();
+  document.getElementById('fileName').textContent = 'Loaded: sample_dataset.csv';
+  loadRows(parseCSV(SAMPLE));
+  document.getElementById('upload')?.scrollIntoView({behavior:'smooth'});
+});
+
+const dz = document.getElementById('dropzone');
+['dragover','dragleave','drop'].forEach(evt=>{
+  dz.addEventListener(evt, e=>{
+    e.preventDefault();
+    dz.classList.toggle('drag', evt==='dragover');
+    if(evt==='drop' && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+});
+document.getElementById('fileInput').addEventListener('change', e=>{ if(e.target.files[0]) handleFile(e.target.files[0]); });
+function handleFile(file){
+  document.getElementById('fileName').textContent = 'Loaded: ' + file.name;
+  const reader = new FileReader();
+  reader.onload = ()=> loadRows(parseCSV(reader.result));
+  reader.readAsText(file);
+}
+
+function classify(colName, values){
+  const nonEmpty = values.filter(v=>v!==undefined && v!==null && String(v).trim()!=='');
+  if(nonEmpty.length===0) return 'text';
+  const numeric = nonEmpty.filter(v=>!isNaN(parseFloat(v)) && isFinite(v)).length / nonEmpty.length;
+  if(numeric > 0.8) return 'numerical';
+  const dateLike = nonEmpty.filter(v=>!isNaN(Date.parse(v)) && /\d{4}-\d{2}-\d{2}/.test(v)).length / nonEmpty.length;
+  if(dateLike > 0.8) return 'date';
+  const uniqueRatio = new Set(nonEmpty).size / nonEmpty.length;
+  return uniqueRatio > 0.5 ? 'text' : 'categorical';
+}
+
+function analyze(rows){
+  if(!rows.length) return;
+  const cols = Object.keys(rows[0]);
+  const totalCells = rows.length * cols.length;
+  let missing = 0;
+  const colTypes = {};
+  const colValues = {};
+  cols.forEach(c=>{
+    const vals = rows.map(r=>r[c]);
+    colValues[c]=vals;
+    colTypes[c]=classify(c, vals);
+    vals.forEach(v=>{ if(v===undefined||v===null||String(v).trim()==='') missing++; });
+  });
+  const seen = new Set(); let dupes = 0;
+  rows.forEach(r=>{ const key = JSON.stringify(r); if(seen.has(key)) dupes++; else seen.add(key); });
+
+  document.getElementById('s-rows').textContent = rows.length;
+  document.getElementById('s-cols').textContent = cols.length;
+  document.getElementById('s-missing').textContent = missing;
+  document.getElementById('s-dupes').textContent = dupes;
+
+  const counts = {numerical:0,categorical:0,date:0,text:0};
+  cols.forEach(c=>counts[colTypes[c]]++);
+  document.getElementById('p-num').textContent = counts.numerical;
+  document.getElementById('p-cat').textContent = counts.categorical;
+  document.getElementById('p-date').textContent = counts.date;
+  document.getElementById('p-text').textContent = counts.text;
+
+  const thead = document.querySelector('#previewTable thead');
+  const tbody = document.querySelector('#previewTable tbody');
+  thead.innerHTML = '<tr>'+cols.map(c=>`<th>${c}</th>`).join('')+'</tr>';
+  tbody.innerHTML = rows.slice(0,8).map(r=>'<tr>'+cols.map(c=>`<td>${r[c]===''||r[c]==null?'<i style="color:var(--red)">missing</i>':r[c]}</td>`).join('')+'</tr>').join('');
+
+  // anomaly detection
+  const anomalies = [];
+  const threshold = [3, 2.2, 1.6][sens]; // z-score threshold by sensitivity
+  cols.forEach(c=>{
+    const vals = colValues[c];
+    const missingCount = vals.filter(v=>v===undefined||v===null||String(v).trim()==='').length;
+    if(missingCount>0){
+      anomalies.push({col:c, problem:'Missing values', sev: missingCount>rows.length*0.2?'Critical':missingCount>rows.length*0.05?'High':'Medium', val:`${missingCount} records`, action:'Fill using mean/median/mode or review manually'});
+    }
+    if(colTypes[c]==='numerical'){
+      const nums = vals.map(v=>parseFloat(v)).filter(v=>!isNaN(v));
+      const mean = nums.reduce((a,b)=>a+b,0)/nums.length;
+      const sd = Math.sqrt(nums.reduce((a,b)=>a+(b-mean)**2,0)/nums.length) || 1;
+      nums.forEach(v=>{
+        const z = Math.abs((v-mean)/sd);
+        if(z>threshold){
+          anomalies.push({col:c, problem:'Outlier value', sev: z>threshold+1?'Critical':z>threshold+0.5?'High':'Low', val:v, action:'Verify value or flag for review'});
+        }
+      });
+    }
+    if(c.toLowerCase().includes('email')){
+      vals.forEach(v=>{ if(v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) anomalies.push({col:c, problem:'Invalid email format', sev:'Medium', val:v, action:'Correct format or remove record'}); });
+    }
+  });
+  if(dupes>0) anomalies.push({col:'(all)', problem:'Duplicate records', sev: dupes>rows.length*0.1?'High':'Medium', val:`${dupes} rows`, action:'Remove or merge duplicate records'});
+
+  const sevRank = {Critical:0,High:1,Medium:2,Low:3};
+  anomalies.sort((a,b)=>sevRank[a.sev]-sevRank[b.sev]);
+  const anomBody = document.querySelector('#anomTable tbody');
+  anomBody.innerHTML = anomalies.slice(0,25).map(a=>`<tr><td>${a.col}</td><td>${a.problem}</td><td><span class="badge b-${a.sev.toLowerCase().slice(0,4)}">${a.sev}</span></td><td>${a.val}</td><td>${a.action}</td></tr>`).join('') || '<tr><td colspan="5" style="color:var(--sub)">No issues detected.</td></tr>';
+
+  // quality score
+  const completeness = Math.max(0, 100 - (missing/totalCells)*100);
+  const uniqueness = Math.max(0, 100 - (dupes/rows.length)*100);
+  const critCount = anomalies.filter(a=>a.sev==='Critical').length;
+  const highCount = anomalies.filter(a=>a.sev==='High').length;
+  const accuracy = Math.max(0, 100 - critCount*8 - highCount*4);
+  const consistency = Math.max(0, 100 - (anomalies.filter(a=>a.problem==='Outlier value').length/Math.max(1,rows.length))*100);
+  const validity = Math.max(0, 100 - (anomalies.filter(a=>a.problem==='Invalid email format').length/Math.max(1,rows.length))*150);
+  const overall = Math.round((completeness+accuracy+consistency+validity+uniqueness)/5);
+
+  document.getElementById('scoreRing').style.setProperty('--pct', overall);
+  document.getElementById('scoreNum').textContent = overall;
+  const set = (id,val)=>{ document.getElementById(id).style.width = Math.round(val)+'%'; };
+  set('bar-comp', completeness); set('bar-acc', accuracy); set('bar-cons', consistency);
+  set('bar-valid', validity); set('bar-uniq', uniqueness);
+
+  // alerts
+  const alertsBox = document.getElementById('alertsList');
+  const top = anomalies.slice(0,6);
+  alertsBox.innerHTML = top.map(a=>`
+    <div class="card" style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+      <div><b>${a.problem} — ${a.col}</b><div class="lead" style="margin:4px 0 0;font-size:13px;">Affected: ${a.val}. ${a.action}.</div></div>
+      <span class="badge b-${a.sev.toLowerCase().slice(0,4)}">${a.sev}</span>
+    </div>`).join('') || '<div class="card">No alerts — dataset looks clean.</div>';
+
+  window.__report = buildReport(rows, cols, missing, dupes, counts, overall, {completeness,accuracy,consistency,validity,uniqueness}, anomalies);
+}
+
+function buildReport(rows, cols, missing, dupes, counts, overall, cat, anomalies){
+  const sevCounts = {Critical:0,High:0,Medium:0,Low:0};
+  anomalies.forEach(a=>sevCounts[a.sev]++);
+  return `VERIFICATION REPORT
+====================
+Dataset summary
+  Rows: ${rows.length}   Columns: ${cols.length}
+  Column types — numerical: ${counts.numerical}, categorical: ${counts.categorical}, date: ${counts.date}, text: ${counts.text}
+  Missing values: ${missing}   Duplicate records: ${dupes}
+
+Data quality score: ${overall} / 100
+  Completeness: ${Math.round(cat.completeness)}   Accuracy: ${Math.round(cat.accuracy)}
+  Consistency: ${Math.round(cat.consistency)}   Validity: ${Math.round(cat.validity)}   Uniqueness: ${Math.round(cat.uniqueness)}
+
+Severity summary
+  Critical: ${sevCounts.Critical}   High: ${sevCounts.High}   Medium: ${sevCounts.Medium}   Low: ${sevCounts.Low}
+
+Detected anomalies (top 15)
+${anomalies.slice(0,15).map(a=>`  - [${a.sev}] ${a.col}: ${a.problem} (${a.val}) -> ${a.action}`).join('\\n') || '  none'}
+
+Remediation suggestions
+  - Review and fill missing values using an appropriate statistical method
+  - Investigate flagged outliers before including them in analysis
+  - De-duplicate records sharing identical values across all fields
+  - Re-run verification after fixes to confirm improved score`;
+}
+
+document.getElementById('genReport').addEventListener('click', ()=>{
+  if(!window.__report){ loadRows(parseCSV(SAMPLE)); }
+  document.getElementById('reportOut').textContent = window.__report;
+  document.getElementById('dlReport').style.display = 'inline-flex';
+});
+document.getElementById('dlReport').addEventListener('click', ()=>{
+  const blob = new Blob([window.__report||''], {type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='verification_report.txt'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+// load sample on first paint so the dashboard works before upload
+loadRows(parseCSV(SAMPLE));
+document.getElementById('fileName').textContent = 'Showing sample dataset — upload your own CSV above.';
+</script>
+</body>
+</html>
